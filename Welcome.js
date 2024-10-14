@@ -8,7 +8,7 @@ const Welcome = ({ navigation }) => {
             <Text style={styles.heading}>Welcome to the React Native Quiz</Text>
             <TouchableOpacity
                 style={styles.startButton}
-                onPress={() => navigation.navigate('Quiz')}
+                onPress={() => navigation.navigate('Login')}
             >
                 <Text style={styles.buttonText}>Start Quiz</Text>
             </TouchableOpacity>
