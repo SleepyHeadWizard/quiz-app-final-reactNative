@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Button } from 'react-native';
 import { quizData } from './quizData';
 
 const Quiz = ({ navigation }) => {
@@ -7,6 +7,10 @@ const Quiz = ({ navigation }) => {
     const [score, setScore] = useState(0);
     const [quizCompleted, setQuizCompleted] = useState(false);
     const [timeLeft, setTimeLeft] = useState(30);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [email, setEmail] = useState('');
+    const [flashMessage, setFlashMessage] = useState('');
+    const [emailSubmitted, setEmailSubmitted] = useState(false);
 
     useEffect(() => {
         if (timeLeft > 0) {
@@ -29,11 +33,24 @@ const Quiz = ({ navigation }) => {
         }
     };
 
-    const handleRetest = () => {
-        setCurrentQuestion(0);
-        setScore(0);
-        setQuizCompleted(false);
-        setTimeLeft(30);
+    const handleSubmit = () => {
+        if (emailSubmitted) {
+            setFlashMessage('Email already submitted!');
+            setTimeout(() => setFlashMessage(''), 2000);
+        } else {
+            setModalVisible(true);
+        }
+    };
+
+    const handleEmailSubmit = () => {
+        // Logic to send email
+        console.log(`Email sent to: ${email}`);
+        setFlashMessage('Email sent successfully!');
+        setEmailSubmitted(true);
+        setTimeout(() => {
+            setFlashMessage('');
+            setModalVisible(false);
+        }, 2000);
     };
 
     const displayAnswers = quizData.map((question, index) => (
@@ -52,16 +69,11 @@ const Quiz = ({ navigation }) => {
                     {displayAnswers}
                     <TouchableOpacity
                         style={styles.retestButton}
-                        onPress={handleRetest}
+                        onPress={handleSubmit}
                     >
-                        <Text style={styles.buttonText}>Retest</Text>
+                        <Text style={styles.buttonText}>Submit</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.retestButton}
-                        onPress={() => navigation.navigate('Welcome')}
-                    >
-                        <Text style={styles.buttonText}>Back to Welcome</Text>
-                    </TouchableOpacity>
+                    {flashMessage ? <Text style={styles.flashMessage}>{flashMessage}</Text> : null}
                 </View>
             ) : (
                 <View>
@@ -78,6 +90,28 @@ const Quiz = ({ navigation }) => {
                     ))}
                 </View>
             )}
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(!modalVisible);
+                }}
+            >
+                <View style={styles.modalView}>
+                    <Text style={styles.modalText}>Enter your email:</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                    />
+                    <Button title="Submit" onPress={handleEmailSubmit} />
+                    <Button title="Cancel" onPress={() => setModalVisible(false)} />
+                    {flashMessage ? <Text style={styles.flashMessage}>{flashMessage}</Text> : null}
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -141,6 +175,39 @@ const styles = StyleSheet.create({
     answerText: {
         fontSize: 18,
         color: '#333',
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+        fontSize: 18,
+    },
+    input: {
+        height: 40,
+        borderColor: 'gray',
+        borderWidth: 1,
+        marginBottom: 15,
+        width: '80%',
+        paddingHorizontal: 10,
+    },
+    flashMessage: {
+        marginTop: 15,
+        color: 'green',
+        fontSize: 16,
     },
 });
 
