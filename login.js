@@ -7,12 +7,12 @@ const Login = ({ navigation }) => {
     const [password, setPassword] = useState('');
 
     const handleLogin = () => {
-        // Add your authentication logic here
-        if (username === 'user' && password === 'password') {
+        if (username === 'admin' && password === 'admin@123') {
+            navigation.navigate('AddQuestion');
+        } else if (username === 'student' && password === 'student') {
             navigation.navigate('Quiz');
         } else {
-            navigation.navigate('Quiz');
-            // alert('Invalid credentials');
+            alert('Invalid credentials');
         }
     };
 

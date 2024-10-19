@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Button } from 'react-native';
 import { quizData } from './quizData';
+import emailjs from 'emailjs-com';
 
 const Quiz = ({ navigation }) => {
     const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -43,14 +44,26 @@ const Quiz = ({ navigation }) => {
     };
 
     const handleEmailSubmit = () => {
-        // Logic to send email
-        console.log(`Email sent to: ${email}`);
-        setFlashMessage('Email sent successfully!');
-        setEmailSubmitted(true);
-        setTimeout(() => {
-            setFlashMessage('');
-            setModalVisible(false);
-        }, 2000);
+        const templateParams = {
+            to_email: email,
+            score: score,
+            total_questions: quizData.length,
+        };
+    
+        emailjs.send('service_vy6dzob', 'template_yep5dyw', templateParams, 'O57Gv8VvCsBHJlV9L')
+            .then((response) => {
+                console.log('SUCCESS!', response.status, response.text);
+                setFlashMessage('Email sent successfully!');
+                setEmailSubmitted(true);
+                setTimeout(() => {
+                    setFlashMessage('');
+                    setModalVisible(false);
+                }, 2000);
+            }, (err) => {
+                console.log('FAILED...', err);
+                setFlashMessage('Failed to send email.');
+                setTimeout(() => setFlashMessage(''), 2000);
+            });
     };
 
     const displayAnswers = quizData.map((question, index) => (
@@ -108,7 +121,6 @@ const Quiz = ({ navigation }) => {
                         onChangeText={setEmail}
                     />
                     <Button title="Submit" onPress={handleEmailSubmit} />
-                    <Button title="Cancel" onPress={() => setModalVisible(false)} />
                     {flashMessage ? <Text style={styles.flashMessage}>{flashMessage}</Text> : null}
                 </View>
             </Modal>
