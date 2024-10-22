@@ -1,13 +1,28 @@
 // AddQuestion.js
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Modal, Button } from 'react-native';
 import { quizData } from './quizData';
-import { Ionicons } from '@expo/vector-icons'; 
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const AddQuestion = ({ navigation }) => {
     const [question, setQuestion] = useState('');
     const [options, setOptions] = useState(['', '', '', '']);
     const [correctAnswer, setCorrectAnswer] = useState('');
+    const [adminEmail, setAdminEmail] = useState('');
+    const [modalVisible, setModalVisible] = useState(true);
+    const [errorMessage, setErrorMessage] = useState('');
+
+    useEffect(() => {
+        const getEmail = async () => {
+            const email = await AsyncStorage.getItem('adminEmail');
+            if (email) {
+                setAdminEmail(email);
+                setModalVisible(false);
+            }
+        };
+        getEmail();
+    }, []);
 
     const handleAddQuestion = () => {
         if (question && options.every(opt => opt) && correctAnswer) {
@@ -28,12 +43,41 @@ const AddQuestion = ({ navigation }) => {
     const handleDeleteQuestion = (index) => {
         quizData.splice(index, 1);
         alert('Question deleted successfully!');
-        // Force re-render
         setQuestion('');
+    };
+
+    const handleEmailSubmit = async () => {
+        if (adminEmail.trim() === '') {
+            setErrorMessage('Email cannot be empty');
+            return;
+        }
+        await AsyncStorage.setItem('adminEmail', adminEmail);
+        setModalVisible(false);
     };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(!modalVisible);
+                }}
+            >
+                <View style={styles.modalView}>
+                    <Text style={styles.modalText}>Enter your email:</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Email"
+                        value={adminEmail}
+                        onChangeText={setAdminEmail}
+                    />
+                    {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+                    <Button title="Submit" onPress={handleEmailSubmit} />
+                </View>
+            </Modal>
+
             <Text style={styles.heading}>Add Question</Text>
             <TextInput
                 style={styles.input}
@@ -148,6 +192,30 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#4CAF50',
         fontWeight: 'bold',
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+        fontSize: 18,
+    },
+    errorText: {
+        color: 'red',
+        marginBottom: 10,
     },
 });
 

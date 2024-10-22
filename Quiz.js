@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Button } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Button, ActivityIndicator } from 'react-native';
 import { quizData } from './quizData';
 import emailjs from 'emailjs-com';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ConfettiCannon from 'react-native-confetti-cannon';
 
 const Quiz = ({ navigation }) => {
     const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -12,6 +14,12 @@ const Quiz = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [flashMessage, setFlashMessage] = useState('');
     const [emailSubmitted, setEmailSubmitted] = useState(false);
+    const [studentName, setStudentName] = useState('');
+    const [registrationNumber, setRegistrationNumber] = useState('');
+    const [submitPressed, setSubmitPressed] = useState(false);
+    const [thankYouNote, setThankYouNote] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (timeLeft > 0) {
@@ -35,19 +43,21 @@ const Quiz = ({ navigation }) => {
     };
 
     const handleSubmit = () => {
-        if (emailSubmitted) {
-            setFlashMessage('Email already submitted!');
-            setTimeout(() => setFlashMessage(''), 2000);
-        } else {
+        if (!submitPressed) {
+            setSubmitPressed(true);
             setModalVisible(true);
         }
     };
 
-    const handleEmailSubmit = () => {
+    const handleEmailSubmit = async () => {
+        setLoading(true);
+        const adminEmail = await AsyncStorage.getItem('adminEmail');
         const templateParams = {
-            to_email: email,
+            to_email: adminEmail,
+            student_name: studentName,
+            registration_number: registrationNumber,
             score: score,
-            total_questions: quizData.length,
+            total_questions: quizData.length
         };
     
         emailjs.send('service_vy6dzob', 'template_yep5dyw', templateParams, 'O57Gv8VvCsBHJlV9L')
@@ -55,23 +65,20 @@ const Quiz = ({ navigation }) => {
                 console.log('SUCCESS!', response.status, response.text);
                 setFlashMessage('Email sent successfully!');
                 setEmailSubmitted(true);
+                setThankYouNote(true);
+                setShowConfetti(true);
+                setLoading(false);
                 setTimeout(() => {
                     setFlashMessage('');
-                    setModalVisible(false);
+                    setModalVisible(false); // Close the modal here
                 }, 2000);
             }, (err) => {
                 console.log('FAILED...', err);
                 setFlashMessage('Failed to send email.');
+                setLoading(false);
                 setTimeout(() => setFlashMessage(''), 2000);
             });
     };
-
-    const displayAnswers = quizData.map((question, index) => (
-        <View key={index} style={styles.answerContainer}>
-            <Text style={styles.answerText}>{question.question}</Text>
-            <Text style={styles.answerText}>Correct Answer: {question.correctAnswer}</Text>
-        </View>
-    ));
 
     return (
         <View style={styles.container}>
@@ -79,14 +86,25 @@ const Quiz = ({ navigation }) => {
                 <View>
                     <Text style={styles.score}>Your Score: {score}</Text>
                     <Text style={styles.question}>Questions and Answers:</Text>
-                    {displayAnswers}
-                    <TouchableOpacity
-                        style={styles.retestButton}
-                        onPress={handleSubmit}
-                    >
-                        <Text style={styles.buttonText}>Submit</Text>
-                    </TouchableOpacity>
+                    {quizData.map((question, index) => (
+                        <View key={index} style={styles.answerContainer}>
+                            <Text style={styles.answerText}>{question.question}</Text>
+                            <Text style={styles.answerText}>Correct Answer: {question.correctAnswer}</Text>
+                        </View>
+                    ))}
+                    {thankYouNote ? (
+                        <Text style={styles.thankYouNote}>Thank you for submitting your details!</Text>
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.retestButton}
+                            onPress={handleSubmit}
+                            disabled={submitPressed}
+                        >
+                            <Text style={styles.buttonText}>Submit</Text>
+                        </TouchableOpacity>
+                    )}
                     {flashMessage ? <Text style={styles.flashMessage}>{flashMessage}</Text> : null}
+                    
                 </View>
             ) : (
                 <View>
@@ -113,17 +131,41 @@ const Quiz = ({ navigation }) => {
                 }}
             >
                 <View style={styles.modalView}>
-                    <Text style={styles.modalText}>Enter your email:</Text>
+                    <Text style={styles.modalText}>Enter your details:</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Name"
+                        value={studentName}
+                        onChangeText={setStudentName}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Registration Number"
+                        value={registrationNumber}
+                        onChangeText={setRegistrationNumber}
+                    />
                     <TextInput
                         style={styles.input}
                         placeholder="Email"
                         value={email}
                         onChangeText={setEmail}
                     />
-                    <Button title="Submit" onPress={handleEmailSubmit} />
+                    {loading ? (
+                        <ActivityIndicator size="large" color="#0000ff" />
+                    ) : (
+                        <Button title="Submit" onPress={handleEmailSubmit} />
+                    )}
                     {flashMessage ? <Text style={styles.flashMessage}>{flashMessage}</Text> : null}
                 </View>
             </Modal>
+            {showConfetti && (
+                <ConfettiCannon
+                    count={200}
+                    origin={{ x: -10, y: 0 }}
+                    fadeOut={true}
+                    onAnimationEnd={() => setShowConfetti(false)}
+                />
+            )}
         </View>
     );
 };
@@ -220,6 +262,11 @@ const styles = StyleSheet.create({
         marginTop: 15,
         color: 'green',
         fontSize: 16,
+    },
+    thankYouNote: {
+        fontSize: 18,
+        color: 'green',
+        marginTop: 20,
     },
 });
 
