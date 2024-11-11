@@ -6,6 +6,7 @@ import Welcome from './Welcome';
 import Quiz from './Quiz';
 import Login from './login';
 import AddQuestion from './AddQuestion';
+import AdminDashboard from './AdminDashboard';
 
 const Stack = createStackNavigator();
 
@@ -17,6 +18,7 @@ const App = () => {
                 <Stack.Screen name="Welcome" component={Welcome} />
                 <Stack.Screen name="Quiz" component={Quiz} />
                 <Stack.Screen name="AddQuestion" component={AddQuestion} />
+                <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
             </Stack.Navigator>
         </NavigationContainer>
     );

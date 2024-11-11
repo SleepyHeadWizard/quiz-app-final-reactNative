@@ -8,7 +8,7 @@ const Login = ({ navigation }) => {
 
     const handleLogin = () => {
         if (username === 'admin' && password === 'admin@123') {
-            navigation.navigate('AddQuestion');
+            navigation.navigate('AdminDashboard');
         } else if (username === 'student' && password === 'student') {
             navigation.navigate('Quiz');
         } else {
